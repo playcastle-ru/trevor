@@ -76,11 +76,12 @@ public abstract class User {
    * @return the serialized map
    */
   public Map<String, String> toDatabaseMap(String instance) {
-    Map<String, String> data = new HashMap<>(4);
+    Map<String, String> data = new HashMap<>(5);
 
     data.put("lastOnline", "0");
     data.put("ip", address);
     data.put("instance", instance);
+    data.put("name", name);
 
     return data;
   }

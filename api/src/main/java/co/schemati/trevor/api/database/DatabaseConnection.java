@@ -60,7 +60,7 @@ public interface DatabaseConnection extends Closeable {
    *
    * @return the disconnect payload
    */
-  DisconnectPayload destroy(UUID uuid);
+  DisconnectPayload destroy(String name, UUID uuid);
 
   /**
    * Sets the server the {@link User} with the provided UUID is connected to.
@@ -156,4 +156,22 @@ public interface DatabaseConnection extends Closeable {
    * issues with all plugins relying on the API.
    */
   void shutdown();
+
+  /**
+   * Gets player uuid from name cache
+   * Returns null if player is offline
+   * @return player's uuid
+   */
+  UUID getPlayerUuid(String name);
+
+  /**
+   * Gets player server name
+   * @return player's server
+   */
+  String getPlayerServer(UUID uuid);
+
+  /**
+   * Cleans data from previous instance
+   */
+  void clean(String instance);
 }

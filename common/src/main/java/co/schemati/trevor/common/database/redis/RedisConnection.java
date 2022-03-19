@@ -6,13 +6,9 @@ import co.schemati.trevor.api.instance.InstanceData;
 import co.schemati.trevor.api.network.payload.DisconnectPayload;
 import com.google.common.collect.ImmutableList;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.ScanParams;
-import redis.clients.jedis.ScanResult;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -23,6 +19,7 @@ import static co.schemati.trevor.common.database.redis.RedisDatabase.HEARTBEAT;
 import static co.schemati.trevor.common.database.redis.RedisDatabase.INSTANCE_PLAYERS;
 import static co.schemati.trevor.common.database.redis.RedisDatabase.PLAYER_DATA;
 import static co.schemati.trevor.common.database.redis.RedisDatabase.SERVER_PLAYERS;
+import static co.schemati.trevor.common.database.redis.RedisDatabase.UUID_NAME_DATA;
 
 public class RedisConnection implements DatabaseConnection {
 
@@ -73,22 +70,27 @@ public class RedisConnection implements DatabaseConnection {
     }
 
     connection.hmset(replace(PLAYER_DATA, user), user.toDatabaseMap(instance));
+    connection.set(replace(UUID_NAME_DATA, user.name()), user.uuid().toString());
     connection.sadd(replace(INSTANCE_PLAYERS, instance), user.toString());
 
     return true;
   }
 
   @Override
-  public DisconnectPayload destroy(UUID uuid) {
+  public DisconnectPayload destroy(String name, UUID uuid) {
     long timestamp = System.currentTimeMillis();
+    destroy(timestamp, uuid);
+    connection.del(replace(UUID_NAME_DATA, name));
 
+    return DisconnectPayload.of(instance, uuid, timestamp);
+  }
+
+  private void destroy(long timestamp, UUID uuid) {
     setServer(uuid, null);
 
     connection.srem(replace(INSTANCE_PLAYERS, instance), uuid.toString());
     connection.hdel(replace(PLAYER_DATA, uuid), "server", "ip", "instance");
     connection.hset(replace(PLAYER_DATA, uuid), "lastOnline", String.valueOf(timestamp));
-
-    return DisconnectPayload.of(instance, uuid, timestamp);
   }
 
   @Override
@@ -163,6 +165,25 @@ public class RedisConnection implements DatabaseConnection {
   @Override
   public void shutdown() {
     connection.hdel(HEARTBEAT, instance);
+  }
+
+  @Override
+  public UUID getPlayerUuid(String name) {
+    String value = connection.get(replace(UUID_NAME_DATA, name));
+    return value == null ? null : UUID.fromString(value);
+  }
+
+  @Override
+  public String getPlayerServer(UUID uuid) {
+    return connection.hget(replace(PLAYER_DATA, uuid), "server");
+  }
+
+  @Override
+  public void clean(String instance) {
+    for(String uuid: connection.smembers(replace(INSTANCE_PLAYERS, instance))) {
+      connection.del(replace(UUID_NAME_DATA, connection.hget(replace(PLAYER_DATA, uuid), "name")));
+      destroy(System.currentTimeMillis(), UUID.fromString(uuid));
+    }
   }
 
   @Override

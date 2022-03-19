@@ -24,6 +24,7 @@ public class RedisDatabase implements Database {
   public static final String INSTANCE_PLAYERS = "instance:{}:players";
   public static final String SERVER_PLAYERS = "server:{}:players";
   public static final String PLAYER_DATA = "player:{}";
+  public static final String UUID_NAME_DATA = "uuidname:{}";
 
   private final Platform platform;
   private final String instance;
@@ -51,6 +52,9 @@ public class RedisDatabase implements Database {
       platform.log("Duplicate instance detected with instance id: {0}", instance);
       return false;
     }
+
+    platform.log("Cleaning previous data...");
+    open().thenAccept(conn -> conn.clean(instance)).join();
 
     this.heartbeat = executor.scheduleAtFixedRate(this::beat, 5, 5, TimeUnit.SECONDS);
 
