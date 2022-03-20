@@ -1,11 +1,18 @@
 plugins {
-	id 'java'
+	id 'java-library'
+	id 'maven-publish'
 }
 
 dependencies {
-	compile project(':trevor-api')
+	compileOnly project(':trevor-api')
 
-	compile "org.spongepowered:configurate-yaml:${configurateVersion}"
+	compileOnlyApi 'pl.memexurer:jedis-datasource-api:1.0-SNAPSHOT'
+}
 
-	compile "redis.clients:jedis:${jedisVersion}"
+publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			from components.java
+		}
+	}
 }

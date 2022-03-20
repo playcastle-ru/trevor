@@ -7,9 +7,7 @@ import co.schemati.trevor.api.database.DatabaseIntercom;
 import co.schemati.trevor.api.database.DatabaseProxy;
 import co.schemati.trevor.api.instance.InstanceData;
 import com.google.gson.Gson;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.exceptions.JedisConnectionException;
+import pl.memexurer.jedisdatasource.api.JedisDataSource;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -29,18 +27,18 @@ public class RedisDatabase implements Database {
   private final Platform platform;
   private final String instance;
   private final InstanceData data;
-  private final JedisPool pool;
+  private final JedisDataSource dataSource;
   private final Gson gson;
   private final ScheduledExecutorService executor;
 
   private RedisIntercom intercom;
   private Future<?> heartbeat;
 
-  public RedisDatabase(Platform platform, InstanceData data, JedisPool pool, Gson gson) {
+  public RedisDatabase(Platform platform, InstanceData data, JedisDataSource dataSource, Gson gson) {
     this.platform = platform;
     this.instance = platform.getInstanceConfiguration().getID();
     this.data = data;
-    this.pool = pool;
+    this.dataSource = dataSource;
     this.gson = gson;
     this.executor = Executors.newScheduledThreadPool(8);
   }
@@ -58,7 +56,7 @@ public class RedisDatabase implements Database {
 
     this.heartbeat = executor.scheduleAtFixedRate(this::beat, 5, 5, TimeUnit.SECONDS);
 
-    this.intercom = new RedisIntercom(platform, this, proxy, gson);
+    this.intercom = new RedisIntercom(platform, this, proxy, gson, dataSource);
 
     intercom.init();
 
@@ -72,17 +70,8 @@ public class RedisDatabase implements Database {
 
   @Override
   public CompletableFuture<DatabaseConnection> open() {
-    CompletableFuture<DatabaseConnection> future = new CompletableFuture<>();
-
-    executor.execute(() -> {
-      try (Jedis resource = getResource()) {
-        future.complete(new RedisConnection(platform.getInstanceConfiguration().getID(), resource, data));
-      } catch (JedisConnectionException exception) {
-        future.completeExceptionally(exception);
-      }
-    });
-
-    return future;
+    return dataSource.open(executor)
+        .thenApply(resource -> new RedisConnection(platform.getInstanceConfiguration().getID(), resource, data));
   }
 
   @Override
@@ -100,11 +89,5 @@ public class RedisDatabase implements Database {
     if (heartbeat != null) {
       heartbeat.cancel(true);
     }
-
-    intercom.kill();
-  }
-
-  protected Jedis getResource() {
-    return pool.getResource();
   }
 }

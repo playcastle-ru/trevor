@@ -23,7 +23,6 @@ allprojects {
         configurateVersion = "3.7.1"
         gsonVersion = "2.8.5"
         guavaVersion = "28.2-jre"
-        jedisVersion = '3.5.2'
 
         // Platform versions
 		bungeeVersion = '1.16-R0.5-SNAPSHOT'

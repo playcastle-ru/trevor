@@ -12,9 +12,8 @@ public class BungeePlatform extends AbstractPlatformBase {
   private BungeeEventProcessor eventProcessor;
 
   public BungeePlatform(TrevorBungee plugin) {
-    super(plugin.getDataFolder());
-
-    this.plugin = plugin;
+    super(null);
+    throw new IllegalArgumentException("This platform is no longer supported, lol.");
   }
 
   public boolean init() {

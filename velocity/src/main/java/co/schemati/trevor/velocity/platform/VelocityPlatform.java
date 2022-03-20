@@ -4,6 +4,9 @@ import co.schemati.trevor.api.network.event.EventProcessor;
 import co.schemati.trevor.api.util.Strings;
 import co.schemati.trevor.common.platform.AbstractPlatformBase;
 import co.schemati.trevor.velocity.TrevorVelocity;
+import com.velocitypowered.api.proxy.ProxyServer;
+import pl.memexurer.jedisdatasource.api.JedisDataSource;
+import pl.memexurer.jedisdatasource.api.JedisDataSourceProvider;
 
 public class VelocityPlatform extends AbstractPlatformBase {
 
@@ -12,9 +15,19 @@ public class VelocityPlatform extends AbstractPlatformBase {
   private VelocityEventProcessor eventProcessor;
 
   public VelocityPlatform(TrevorVelocity plugin) {
-    super(plugin.getDataFolder().toFile());
-
+    super(findDataSource(plugin.getProxy()));
     this.plugin = plugin;
+  }
+
+  private static JedisDataSource findDataSource(ProxyServer server) {
+    for (var plugin : server.getPluginManager().getPlugins()) {
+      var dataSource = plugin.getInstance().filter(object -> object instanceof JedisDataSourceProvider)
+          .map(object -> (JedisDataSourceProvider) object);
+      if (dataSource.isPresent()) {
+        return dataSource.get().getDataSource();
+      }
+    }
+    return null;
   }
 
   public boolean init() {

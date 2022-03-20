@@ -5,20 +5,14 @@ import co.schemati.trevor.api.database.DatabaseIntercom;
 import co.schemati.trevor.api.database.DatabaseProxy;
 import co.schemati.trevor.api.util.Strings;
 import co.schemati.trevor.common.util.Protocol;
-import com.google.common.collect.Sets;
 import com.google.gson.Gson;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPubSub;
-import redis.clients.jedis.exceptions.JedisException;
-
-import java.util.Arrays;
-import java.util.Set;
-import java.util.concurrent.Future;
+import pl.memexurer.jedisdatasource.api.JedisDataSource;
+import pl.memexurer.jedisdatasource.api.JedisPubSubHandler;
 
 import static co.schemati.trevor.api.database.Database.CHANNEL_DATA;
 import static co.schemati.trevor.api.database.Database.CHANNEL_INSTANCE;
 
-public class RedisIntercom extends JedisPubSub implements DatabaseIntercom {
+public class RedisIntercom implements DatabaseIntercom, JedisPubSubHandler {
 
   private final Platform platform;
   private final RedisDatabase database;
@@ -26,67 +20,42 @@ public class RedisIntercom extends JedisPubSub implements DatabaseIntercom {
   private final Gson gson;
 
   private final String instance;
-  private final Set<String> channels = Sets.newHashSet();
+  private final JedisDataSource dataSource;
 
-  private Jedis connection;
-  private Future<?> task;
-
-  public RedisIntercom(Platform platform, RedisDatabase database, DatabaseProxy proxy, Gson gson) {
+  public RedisIntercom(Platform platform, RedisDatabase database, DatabaseProxy proxy, Gson gson,
+      JedisDataSource dataSource) {
     this.platform = platform;
     this.database = database;
     this.proxy = proxy;
     this.gson = gson;
 
     this.instance = platform.getInstanceConfiguration().getID();
+    this.dataSource = dataSource;
   }
 
   @Override
   public void init() {
-    channels.add(Strings.replace(CHANNEL_INSTANCE, instance));
-    channels.add(CHANNEL_DATA);
-
-    this.task = database.getExecutor().submit(this);
-  }
-
-  @Override
-  public void run() {
-    try {
-      this.connection = database.getResource();
-
-      connection.subscribe(this, channels.toArray(String[]::new));
-    } catch (JedisException exception) {
-      exception.printStackTrace();
-    }
+    dataSource.subscribe(Strings.replace(CHANNEL_INSTANCE, instance), CHANNEL_DATA);
+    dataSource.addHandler(this);
   }
 
   public void add(String... channel) {
-    channels.addAll(Arrays.asList(channel));
-    super.subscribe(channels.toArray(String[]::new));
+    dataSource.subscribe(channel);
   }
 
   public void remove(String... channel) {
-    channels.removeAll(Arrays.asList(channel));
-    super.unsubscribe(channel);
-  }
-
-  public void kill() {
-    channels.forEach(super::unsubscribe);
-    channels.clear();
-
-    connection.close();
-
-    task.cancel(true);
+    dataSource.unsubscribe(channel);
   }
 
   @Override
-  public void onMessage(String channel, String message) {
+  public void handle(String channel, String message) {
     database.getExecutor().submit(() -> {
       if (message.trim().length() > 0) {
         if (channel.equals(CHANNEL_DATA)) {
           proxy.onNetworkIntercom(channel, message);
         } else {
           Protocol.deserialize(message, gson).ifPresent(payload ->
-                  payload.process(platform.getEventProcessor()).post()
+              payload.process(platform.getEventProcessor()).post()
           );
         }
       }
