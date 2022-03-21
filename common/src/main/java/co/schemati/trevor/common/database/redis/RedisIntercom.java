@@ -6,6 +6,8 @@ import co.schemati.trevor.api.database.DatabaseProxy;
 import co.schemati.trevor.api.util.Strings;
 import co.schemati.trevor.common.util.Protocol;
 import com.google.gson.Gson;
+import java.util.ArrayList;
+import java.util.List;
 import pl.memexurer.jedisdatasource.api.JedisDataSource;
 import pl.memexurer.jedisdatasource.api.JedisPubSubHandler;
 
@@ -21,6 +23,8 @@ public class RedisIntercom implements DatabaseIntercom, JedisPubSubHandler {
 
   private final String instance;
   private final JedisDataSource dataSource;
+
+  private final List<String> channels = new ArrayList<>();
 
   public RedisIntercom(Platform platform, RedisDatabase database, DatabaseProxy proxy, Gson gson,
       JedisDataSource dataSource) {
@@ -41,10 +45,12 @@ public class RedisIntercom implements DatabaseIntercom, JedisPubSubHandler {
 
   public void add(String... channel) {
     dataSource.subscribe(channel);
+    channels.addAll(List.of(channel));
   }
 
   public void remove(String... channel) {
     dataSource.unsubscribe(channel);
+    channels.removeAll(List.of(channel));
   }
 
   @Override
@@ -53,7 +59,7 @@ public class RedisIntercom implements DatabaseIntercom, JedisPubSubHandler {
       if (message.trim().length() > 0) {
         if (channel.equals(CHANNEL_DATA)) {
           proxy.onNetworkIntercom(channel, message);
-        } else {
+        } else if(channels.contains(channel)) {
           Protocol.deserialize(message, gson).ifPresent(payload ->
               payload.process(platform.getEventProcessor()).post()
           );
