@@ -38,6 +38,8 @@ public class TrevorVelocity {
   @DataDirectory
   private Path dataFolder;
 
+  private boolean hasStarted = false;
+
   @Subscribe
   public void onProxyStart(ProxyInitializeEvent event) {
     this.platform = new VelocityPlatform(this);
@@ -59,12 +61,14 @@ public class TrevorVelocity {
       return;
     }
 
+    hasStarted = true;
     proxy.getEventManager().register(this, new VelocityListener(this));
   }
 
   @Subscribe
   public void onProxyShutdown(ProxyShutdownEvent event) {
-    common.stop();
+    if(hasStarted)
+      common.stop();
   }
 
   public ProxyServer getProxy() {
