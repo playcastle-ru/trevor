@@ -6,6 +6,7 @@ import co.schemati.trevor.api.database.DatabaseConnection;
 import co.schemati.trevor.api.database.DatabaseIntercom;
 import co.schemati.trevor.api.database.DatabaseProxy;
 import co.schemati.trevor.api.instance.InstanceData;
+import co.schemati.trevor.common.database.redis.uuid.RedisUuidTranslator;
 import com.google.gson.Gson;
 import pl.memexurer.jedisdatasource.api.JedisDataSource;
 
@@ -30,6 +31,7 @@ public class RedisDatabase implements Database {
   private final JedisDataSource dataSource;
   private final Gson gson;
   private final ScheduledExecutorService executor;
+  private final RedisUuidTranslator translator;
 
   private RedisIntercom intercom;
   private Future<?> heartbeat;
@@ -41,6 +43,7 @@ public class RedisDatabase implements Database {
     this.dataSource = dataSource;
     this.gson = gson;
     this.executor = Executors.newScheduledThreadPool(8);
+    this.translator = new RedisUuidTranslator(platform);
   }
 
   @Override
@@ -69,9 +72,10 @@ public class RedisDatabase implements Database {
   }
 
   @Override
-  public CompletableFuture<DatabaseConnection> open() {
+  public CompletableFuture<RedisConnection> open() {
     return dataSource.open(executor)
-        .thenApply(resource -> new RedisConnection(platform.getInstanceConfiguration().getID(), resource, data));
+        .thenApply(resource -> new RedisConnection(platform.getInstanceConfiguration().getID(), resource, data,
+            translator));
   }
 
   @Override
@@ -89,5 +93,9 @@ public class RedisDatabase implements Database {
     if (heartbeat != null) {
       heartbeat.cancel(true);
     }
+  }
+
+  public RedisUuidTranslator getTranslator() {
+    return translator;
   }
 }

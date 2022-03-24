@@ -4,6 +4,8 @@ import co.schemati.trevor.api.network.event.EventProcessor;
 import co.schemati.trevor.api.util.Strings;
 import co.schemati.trevor.bungee.TrevorBungee;
 import co.schemati.trevor.common.platform.AbstractPlatformBase;
+import java.util.UUID;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 public class BungeePlatform extends AbstractPlatformBase {
 
@@ -39,5 +41,21 @@ public class BungeePlatform extends AbstractPlatformBase {
   @Override
   public void log(String message, Object... values) {
     plugin.getLogger().info(Strings.format(message, values));
+  }
+
+  @Override
+  public UUID getLocalPlayerUuid(String name) {
+    ProxiedPlayer player = plugin.getProxy().getPlayer(name);
+    if(player == null)
+      return null;
+    return player.getUniqueId();
+  }
+
+  @Override
+  public String getLocalPlayerName(UUID uuid) {
+    ProxiedPlayer player = plugin.getProxy().getPlayer(uuid);
+    if(player == null)
+      return null;
+    return player.getName();
   }
 }

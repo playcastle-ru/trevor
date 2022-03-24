@@ -3,6 +3,7 @@ package co.schemati.trevor.common.proxy;
 import co.schemati.trevor.api.data.Platform;
 import co.schemati.trevor.api.data.User;
 import co.schemati.trevor.api.database.Database;
+import co.schemati.trevor.api.database.DatabaseConfiguration;
 import co.schemati.trevor.api.database.DatabaseConnection;
 import co.schemati.trevor.api.database.DatabaseProxy;
 import co.schemati.trevor.api.network.payload.ConnectPayload;
@@ -21,13 +22,13 @@ import java.util.concurrent.CompletionException;
 public class DatabaseProxyImpl implements DatabaseProxy {
 
   private final Platform platform;
-  private final Database database;
+  private final RedisDatabase database;
   private final Gson gson;
 
   private final String instance;
   private final InstanceUserMap users;
 
-  public DatabaseProxyImpl(Platform platform, Database database) {
+  public DatabaseProxyImpl(Platform platform, RedisDatabase database) {
     this.platform = platform;
     this.database = database;
     this.gson = TrevorCommon.gson();
@@ -46,6 +47,7 @@ public class DatabaseProxyImpl implements DatabaseProxy {
 
           connection.create(user);
           post(RedisDatabase.CHANNEL_DATA, connection, payload);
+          connection.persistUuid(user.name(), user.uuid());
 
           return ConnectResult.allow();
         }

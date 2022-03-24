@@ -38,7 +38,7 @@ public interface Database {
    *
    * @return future wrapper database connection
    */
-  CompletableFuture<DatabaseConnection> open();
+  CompletableFuture<? extends DatabaseConnection> open();
 
   /**
    * Returns the {@link DatabaseIntercom}.

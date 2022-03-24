@@ -2,8 +2,12 @@ package co.schemati.trevor.common.database.redis;
 
 import co.schemati.trevor.api.data.User;
 import co.schemati.trevor.api.database.DatabaseConnection;
+import co.schemati.trevor.api.database.uuid.UuidTranslator;
+import co.schemati.trevor.api.database.uuid.UuidTranslatorProxy;
 import co.schemati.trevor.api.instance.InstanceData;
 import co.schemati.trevor.api.network.payload.DisconnectPayload;
+import co.schemati.trevor.common.database.redis.uuid.RedisUuidTranslator;
+import co.schemati.trevor.common.database.redis.uuid.UuidTranslatorImpl;
 import com.google.common.collect.ImmutableList;
 import redis.clients.jedis.Jedis;
 
@@ -27,10 +31,14 @@ public class RedisConnection implements DatabaseConnection {
   private final Jedis connection;
   private final InstanceData data;
 
-  public RedisConnection(String instance, Jedis connection, InstanceData data) {
+  private final RedisUuidTranslator uuidTranslator;
+
+  public RedisConnection(String instance, Jedis connection, InstanceData data,
+     RedisUuidTranslator uuidTranslator) {
     this.instance = instance;
     this.connection = connection;
     this.data = data;
+    this.uuidTranslator = uuidTranslator;
   }
 
   @Override
@@ -168,12 +176,6 @@ public class RedisConnection implements DatabaseConnection {
   }
 
   @Override
-  public UUID getPlayerUuid(String name) {
-    String value = connection.get(replace(UUID_NAME_DATA, name));
-    return value == null ? null : UUID.fromString(value);
-  }
-
-  @Override
   public String getPlayerServer(UUID uuid) {
     return connection.hget(replace(PLAYER_DATA, uuid), "server");
   }
@@ -184,6 +186,15 @@ public class RedisConnection implements DatabaseConnection {
       connection.del(replace(UUID_NAME_DATA, connection.hget(replace(PLAYER_DATA, uuid), "name")));
       destroy(System.currentTimeMillis(), UUID.fromString(uuid));
     }
+  }
+
+  @Override
+  public UuidTranslator getUuidTranslator() {
+    return new UuidTranslatorImpl(uuidTranslator, connection);
+  }
+
+  public void persistUuid(String name, UUID uuid) {
+    uuidTranslator.persistInfo(name, uuid, connection);
   }
 
   @Override

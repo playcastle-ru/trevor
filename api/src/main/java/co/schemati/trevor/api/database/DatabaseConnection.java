@@ -2,6 +2,7 @@ package co.schemati.trevor.api.database;
 
 import co.schemati.trevor.api.TrevorAPI;
 import co.schemati.trevor.api.data.User;
+import co.schemati.trevor.api.database.uuid.UuidTranslator;
 import co.schemati.trevor.api.instance.InstanceData;
 import co.schemati.trevor.api.network.payload.DisconnectPayload;
 
@@ -158,13 +159,6 @@ public interface DatabaseConnection extends Closeable {
   void shutdown();
 
   /**
-   * Gets player uuid from name cache
-   * Returns null if player is offline
-   * @return player's uuid
-   */
-  UUID getPlayerUuid(String name);
-
-  /**
    * Gets player server name
    * @return player's server
    */
@@ -174,4 +168,9 @@ public interface DatabaseConnection extends Closeable {
    * Cleans data from previous instance
    */
   void clean(String instance);
+
+  /**
+   * Returns the {@link co.schemati.trevor.api.database.uuid.UuidTranslator}
+   */
+  UuidTranslator getUuidTranslator();
 }

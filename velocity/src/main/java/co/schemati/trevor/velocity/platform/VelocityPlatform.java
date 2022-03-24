@@ -4,7 +4,9 @@ import co.schemati.trevor.api.network.event.EventProcessor;
 import co.schemati.trevor.api.util.Strings;
 import co.schemati.trevor.common.platform.AbstractPlatformBase;
 import co.schemati.trevor.velocity.TrevorVelocity;
+import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import java.util.UUID;
 import pl.memexurer.jedisdatasource.api.JedisDataSource;
 import pl.memexurer.jedisdatasource.api.JedisDataSourceProvider;
 
@@ -53,5 +55,15 @@ public class VelocityPlatform extends AbstractPlatformBase {
   @Override
   public void log(String message, Object... values) {
     plugin.getLogger().info(Strings.format(message, values));
+  }
+
+  @Override
+  public UUID getLocalPlayerUuid(String name) {
+    return plugin.getProxy().getPlayer(name).map(Player::getUniqueId).orElse(null);
+  }
+
+  @Override
+  public String getLocalPlayerName(UUID uuid) {
+    return plugin.getProxy().getPlayer(uuid).map(Player::getUsername).orElse(null);
   }
 }

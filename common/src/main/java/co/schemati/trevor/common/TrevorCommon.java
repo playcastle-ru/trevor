@@ -6,6 +6,8 @@ import co.schemati.trevor.api.data.Platform;
 import co.schemati.trevor.api.database.Database;
 import co.schemati.trevor.api.database.DatabaseConnection;
 import co.schemati.trevor.api.instance.InstanceData;
+import co.schemati.trevor.common.database.redis.RedisDatabase;
+import co.schemati.trevor.common.platform.AbstractPlatformBase;
 import co.schemati.trevor.common.proxy.DatabaseProxyImpl;
 import com.google.gson.Gson;
 
@@ -13,14 +15,14 @@ public class TrevorCommon implements TrevorAPI {
 
   private static Gson gson;
 
-  private final Platform platform;
+  private final AbstractPlatformBase platform;
 
-  private Database database;
+  private RedisDatabase database;
   private DatabaseProxyImpl proxy;
 
   private InstanceData data;
 
-  public TrevorCommon(Platform platform) {
+  public TrevorCommon(AbstractPlatformBase platform) {
     this.platform = platform;
   }
 
@@ -32,7 +34,7 @@ public class TrevorCommon implements TrevorAPI {
 
     this.data = new InstanceData();
 
-    this.database = platform.getDatabaseConfiguration().create(platform, data, gson);
+    this.database = (RedisDatabase) platform.getDatabaseConfiguration().create(platform, data, gson);
 
     this.proxy = new DatabaseProxyImpl(platform, database);
 

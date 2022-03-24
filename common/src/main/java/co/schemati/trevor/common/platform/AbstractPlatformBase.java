@@ -5,6 +5,7 @@ import co.schemati.trevor.api.database.DatabaseConfiguration;
 import co.schemati.trevor.api.instance.InstanceConfiguration;
 import co.schemati.trevor.common.database.redis.RedisConfiguration;
 
+import co.schemati.trevor.common.database.redis.RedisDatabase;
 import pl.memexurer.jedisdatasource.api.JedisDataSource;
 
 public abstract class AbstractPlatformBase implements Platform {

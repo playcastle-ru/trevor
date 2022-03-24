@@ -4,6 +4,7 @@ import co.schemati.trevor.api.database.DatabaseConfiguration;
 import co.schemati.trevor.api.instance.InstanceConfiguration;
 import co.schemati.trevor.api.network.event.EventProcessor;
 import co.schemati.trevor.api.util.Strings;
+import java.util.UUID;
 
 /**
  * Each individual software implementation must implement a {@link Platform} in order for the
@@ -55,4 +56,14 @@ public interface Platform {
    * @see Strings#format
    */
   void log(String message, Object... values);
+
+  /**
+   * Gets unique id of player by specified name in this proxy instance
+   */
+  UUID getLocalPlayerUuid(String name);
+
+  /**
+   * Gets name of player by specified unique id in this proxy instance
+   */
+  String getLocalPlayerName(UUID uuid);
 }
