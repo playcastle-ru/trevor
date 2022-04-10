@@ -10,6 +10,7 @@ import co.schemati.trevor.common.database.redis.uuid.RedisUuidTranslator;
 import co.schemati.trevor.common.database.redis.uuid.UuidTranslatorImpl;
 import com.google.common.collect.ImmutableList;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Pipeline;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
@@ -58,7 +59,9 @@ public class RedisConnection implements DatabaseConnection {
 
         playerCount += connection.scard(replace(INSTANCE_PLAYERS, entry.getKey()));
       } else {
-        // TODO: Potentially notify that the instance could be dead.
+        connection.hdel(HEARTBEAT, entry.getKey());
+        clean(entry.getKey());
+        System.out.println("Instance " + entry.getKey() + " was dead, so it got removed.");
       }
     }
 
@@ -182,10 +185,12 @@ public class RedisConnection implements DatabaseConnection {
 
   @Override
   public void clean(String instance) {
+    Pipeline pipeline = connection.pipelined();
     for(String uuid: connection.smembers(replace(INSTANCE_PLAYERS, instance))) {
-      connection.del(replace(UUID_NAME_DATA, connection.hget(replace(PLAYER_DATA, uuid), "name")));
+      pipeline.del(replace(UUID_NAME_DATA, connection.hget(replace(PLAYER_DATA, uuid), "name")));
       destroy(System.currentTimeMillis(), UUID.fromString(uuid));
     }
+    pipeline.sync();
   }
 
   @Override

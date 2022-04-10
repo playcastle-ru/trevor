@@ -10,6 +10,7 @@ import co.schemati.trevor.common.database.redis.uuid.RedisUuidTranslator;
 import com.google.gson.Gson;
 import pl.memexurer.jedisdatasource.api.JedisDataSource;
 
+import java.io.File;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -48,10 +49,16 @@ public class RedisDatabase implements Database {
 
   @Override
   public boolean init(DatabaseProxy proxy) {
-    boolean duplicate = open().thenApply(DatabaseConnection::isInstanceAlive).join();
-    if (duplicate) {
-      platform.log("Duplicate instance detected with instance id: {0}", instance);
-      return false;
+    File crashRecovery = new File("crash_recovery");
+    if(crashRecovery.exists()) {
+      platform.log("Skipping heartbeat check because server is recovering from a crash", instance);
+      crashRecovery.delete();
+    } else {
+      boolean duplicate = open().thenApply(DatabaseConnection::isInstanceAlive).join();
+      if (duplicate) {
+        platform.log("Duplicate instance detected with instance id: {0}\nIf server is recovering from a crash, create a file named 'crash_recovery'", instance);
+        return false;
+      }
     }
 
     platform.log("Cleaning previous data...");
