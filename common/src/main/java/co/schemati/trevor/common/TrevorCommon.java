@@ -4,12 +4,14 @@ import co.schemati.trevor.api.TrevorAPI;
 import co.schemati.trevor.api.TrevorService;
 import co.schemati.trevor.api.data.Platform;
 import co.schemati.trevor.api.database.Database;
-import co.schemati.trevor.api.database.DatabaseConnection;
 import co.schemati.trevor.api.instance.InstanceData;
 import co.schemati.trevor.common.database.redis.RedisDatabase;
 import co.schemati.trevor.common.platform.AbstractPlatformBase;
 import co.schemati.trevor.common.proxy.DatabaseProxyImpl;
 import com.google.gson.Gson;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class TrevorCommon implements TrevorAPI {
 
@@ -47,7 +49,11 @@ public class TrevorCommon implements TrevorAPI {
 
   public boolean stop() {
     if (database != null) {
-      database.open().thenAccept(DatabaseConnection::shutdown).join();
+      try {
+        database.open().get(1, TimeUnit.SECONDS).shutdown();
+      } catch (InterruptedException | ExecutionException | TimeoutException e) {
+        throw new IllegalArgumentException("Unable to fetch RedisConnection instance!");
+      }
 
       database.kill();
     }
