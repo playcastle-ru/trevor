@@ -7,6 +7,7 @@ import co.schemati.trevor.api.util.Strings;
 import co.schemati.trevor.common.util.Protocol;
 import com.google.gson.Gson;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import pl.memexurer.jedisdatasource.api.JedisDataSource;
 import pl.memexurer.jedisdatasource.api.JedisPubSubHandler;
@@ -39,22 +40,28 @@ public class RedisIntercom implements DatabaseIntercom, JedisPubSubHandler {
 
   @Override
   public void init() {
-    dataSource.subscribe(Strings.replace(CHANNEL_INSTANCE, instance), CHANNEL_DATA);
+    dataSource.subscribe(Strings.replace(CHANNEL_INSTANCE, instance).getBytes(), CHANNEL_DATA.getBytes());
     dataSource.addHandler(this);
   }
 
   public void add(String... channel) {
-    dataSource.subscribe(channel);
+    Arrays.stream(channel)
+        .map(String::getBytes)
+        .forEach(dataSource::subscribe);
     channels.addAll(List.of(channel));
   }
 
   public void remove(String... channel) {
-    dataSource.unsubscribe(channel);
+    Arrays.stream(channel)
+        .map(String::getBytes)
+        .forEach(dataSource::unsubscribe);
     channels.removeAll(List.of(channel));
   }
 
   @Override
-  public void handle(String channel, String message) {
+  public void handle(String channel, byte[] messageRaw) {
+    String message = new String(messageRaw);
+
     database.getExecutor().submit(() -> {
       if (message.trim().length() > 0) {
         if (channel.equals(CHANNEL_DATA)) {
