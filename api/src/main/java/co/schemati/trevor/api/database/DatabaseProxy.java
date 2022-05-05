@@ -5,6 +5,7 @@ import co.schemati.trevor.api.instance.InstanceUserMap;
 import co.schemati.trevor.api.network.payload.NetworkPayload;
 
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -64,6 +65,15 @@ public interface DatabaseProxy {
    * @param previousServer the previous server
    */
   void onPlayerServerChange(User user, String server, String previousServer);
+
+  /**
+   * Notifies the {@link co.schemati.trevor.api.TrevorAPI} implementation that a {@link User} will
+   * change servers
+   *
+   * @param user the user
+   * @param server the server
+   */
+  void changeServer(UUID user, String server);
 
   /**
    * Notifies the {@link co.schemati.trevor.api.TrevorAPI} implementation that a network

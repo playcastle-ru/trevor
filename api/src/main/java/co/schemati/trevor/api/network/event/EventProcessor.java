@@ -1,5 +1,6 @@
 package co.schemati.trevor.api.network.event;
 
+import co.schemati.trevor.api.network.payload.ChangeServerPayload;
 import co.schemati.trevor.api.network.payload.ConnectPayload;
 import co.schemati.trevor.api.network.payload.DisconnectPayload;
 import co.schemati.trevor.api.network.payload.NetworkPayload;
@@ -44,6 +45,16 @@ public interface EventProcessor {
    * @return the event action
    */
   <T extends NetworkServerChangeEvent> EventAction<T> onServerChange(ServerChangePayload payload);
+
+  /**
+   * Notify the {@link co.schemati.trevor.api.data.Platform} of a {@link ChangeServerPayload}.
+   *
+   * @param payload the payload
+   * @param <T> the platform specific implementation of {@link NetworkChangeServerEvent}
+   *
+   * @return the event action
+   */
+  <T extends NetworkChangeServerEvent> EventAction<T> onChangeServer(ChangeServerPayload payload);
 
   /**
    * Notify the {@link co.schemati.trevor.api.data.Platform} of a generic {@link NetworkPayload}.

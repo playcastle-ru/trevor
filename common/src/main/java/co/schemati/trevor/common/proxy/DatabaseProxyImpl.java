@@ -2,10 +2,9 @@ package co.schemati.trevor.common.proxy;
 
 import co.schemati.trevor.api.data.Platform;
 import co.schemati.trevor.api.data.User;
-import co.schemati.trevor.api.database.Database;
-import co.schemati.trevor.api.database.DatabaseConfiguration;
 import co.schemati.trevor.api.database.DatabaseConnection;
 import co.schemati.trevor.api.database.DatabaseProxy;
+import co.schemati.trevor.api.network.payload.ChangeServerPayload;
 import co.schemati.trevor.api.network.payload.ConnectPayload;
 import co.schemati.trevor.api.network.payload.DisconnectPayload;
 import co.schemati.trevor.api.network.payload.NetworkPayload;
@@ -16,6 +15,7 @@ import co.schemati.trevor.api.instance.InstanceUserMap;
 import co.schemati.trevor.common.util.Protocol;
 import com.google.gson.Gson;
 
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
@@ -82,6 +82,16 @@ public class DatabaseProxyImpl implements DatabaseProxy {
      connection.setServer(user, server);
      post(RedisDatabase.CHANNEL_DATA, connection, payload);
    });
+  }
+
+  @Override
+  public void changeServer(UUID user, String server) {
+    database.open().thenAccept(connection -> {
+      ChangeServerPayload payload =
+          ChangeServerPayload.of(instance, user, server);
+
+      post(RedisDatabase.CHANNEL_DATA, connection, payload);
+    });
   }
 
   @Override

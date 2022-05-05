@@ -3,16 +3,20 @@ package co.schemati.trevor.velocity.platform;
 import co.schemati.trevor.api.database.DatabaseProxy;
 import co.schemati.trevor.common.proxy.DatabaseProxyImpl;
 import co.schemati.trevor.velocity.TrevorVelocity;
+import com.google.common.io.ByteStreams;
 import com.velocitypowered.api.event.PostOrder;
 import com.velocitypowered.api.event.ResultedEvent;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.LoginEvent;
+import com.velocitypowered.api.event.connection.PluginMessageEvent;
+import com.velocitypowered.api.event.connection.PluginMessageEvent.ForwardResult;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.event.proxy.ProxyPingEvent;
 import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
-import com.velocitypowered.api.proxy.server.ServerInfo;
+import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
@@ -68,6 +72,19 @@ public class VelocityListener {
                     plugin.getCommon().getInstanceData().getPlayerCount()
             ).build()
     );
+  }
+
+  @Subscribe
+  public void onMessage(PluginMessageEvent event)  {
+    if(!(event.getSource() instanceof ServerConnection))
+      return;
+
+    if(event.getIdentifier().getId().equals("multisend")) {
+      var input = ByteStreams.newDataInput(event.getData());
+      var uuid = new UUID(input.readLong(), input.readLong());
+      proxy.changeServer(uuid, input.readUTF());
+      event.setResult(ForwardResult.handled());
+    }
   }
 
   private Component serialize(String text) {

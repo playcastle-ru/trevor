@@ -1,6 +1,7 @@
 package co.schemati.trevor.velocity;
 
 import co.schemati.trevor.common.TrevorCommon;
+import co.schemati.trevor.velocity.command.PlayerListCommand;
 import co.schemati.trevor.velocity.platform.VelocityListener;
 import co.schemati.trevor.velocity.platform.VelocityPlatform;
 import com.google.inject.Inject;
@@ -11,6 +12,7 @@ import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.messages.LegacyChannelIdentifier;
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
@@ -67,6 +69,8 @@ public class TrevorVelocity {
 
     hasStarted = true;
     proxy.getEventManager().register(this, new VelocityListener(this));
+
+    proxy.getChannelRegistrar().register(new LegacyChannelIdentifier("multisend"));
   }
 
   @Subscribe

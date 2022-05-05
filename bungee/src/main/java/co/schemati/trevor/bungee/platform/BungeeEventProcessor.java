@@ -1,6 +1,9 @@
 package co.schemati.trevor.bungee.platform;
 
 import co.schemati.trevor.api.network.event.EventProcessor;
+import co.schemati.trevor.api.network.event.NetworkChangeServerEvent;
+import co.schemati.trevor.api.network.event.NetworkEvent;
+import co.schemati.trevor.api.network.payload.ChangeServerPayload;
 import co.schemati.trevor.api.network.payload.ConnectPayload;
 import co.schemati.trevor.api.network.payload.DisconnectPayload;
 import co.schemati.trevor.api.network.payload.NetworkPayload;
@@ -40,6 +43,19 @@ public class BungeeEventProcessor implements EventProcessor {
   @Override
   public EventAction<BungeeNetworkMessageEvent> onMessage(NetworkPayload payload) {
     return wrap(new BungeeNetworkMessageEvent(payload));
+  }
+
+  @Override
+  public EventAction<NetworkChangeServerEvent> onChangeServer(
+      ChangeServerPayload payload) {
+    var player = plugin.getProxy().getPlayer(payload.uuid());
+    if(player != null)
+      player.connect(plugin.getProxy().getServerInfo(payload.getDestinationServer()));
+    return empty();
+  }
+
+  private <T extends NetworkEvent> EventAction<T> empty() {
+    return new EventAction<>(null, x -> CompletableFuture.completedFuture(null));
   }
 
   private <T extends BungeeNetworkEvent> EventAction<T> wrap(T event) {
