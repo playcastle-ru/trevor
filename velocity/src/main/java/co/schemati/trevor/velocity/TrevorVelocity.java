@@ -70,6 +70,10 @@ public class TrevorVelocity {
     hasStarted = true;
     proxy.getEventManager().register(this, new VelocityListener(this));
 
+    proxy.getCommandManager().register(
+        proxy.getCommandManager().metaBuilder("plist").build(),
+        new PlayerListCommand(common));
+
     proxy.getChannelRegistrar().register(new LegacyChannelIdentifier("multisend"));
   }
 
