@@ -6,6 +6,7 @@ import co.schemati.trevor.api.instance.InstanceConfiguration;
 import co.schemati.trevor.common.database.redis.RedisConfiguration;
 
 import co.schemati.trevor.common.database.redis.RedisDatabase;
+import java.util.UUID;
 import pl.memexurer.jedisdatasource.api.JedisDataSource;
 
 public abstract class AbstractPlatformBase implements Platform {
@@ -21,12 +22,7 @@ public abstract class AbstractPlatformBase implements Platform {
 
   @Override
   public boolean init() {
-    this.instanceConfiguration = new InstanceConfiguration(System.getenv("proxy-id"));
-    if(this.instanceConfiguration.getID() == null) {
-      System.out.println("Environment variable `proxy-id` is not set!");
-      return false;
-    }
-
+    this.instanceConfiguration = new InstanceConfiguration(System.getenv("proxy-id") == null ? UUID.randomUUID().toString() : System.getenv("proxy-id"));
     this.databaseConfiguration = new RedisConfiguration(dataSource);
 
     return true;
