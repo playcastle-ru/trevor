@@ -5,6 +5,9 @@ import co.schemati.trevor.api.database.uuid.UuidTranslatorProxy;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 import redis.clients.jedis.commands.StringCommands;
 import redis.clients.jedis.params.SetParams;
@@ -88,6 +91,44 @@ public final class RedisUuidTranslator implements UuidTranslatorProxy<StringComm
     }
 
     return null;
+  }
+
+  @Override
+  public List<String> getNameFromUuids(Collection<UUID> collectionPlayers, StringCommands resource) {
+    List<UUID> players = new ArrayList<>(collectionPlayers);
+    List<String> playerNames = new ArrayList<>();
+
+    for(UUID player: players) {
+      // If the player is online, give them their UUID.
+      // Remember, local data > remote data.
+      var localName = platform.getLocalPlayerName(player);
+      if (localName != null) {
+        playerNames.add(localName);
+        players.remove(player);
+        continue;
+      }
+
+      // Check if it exists in the map
+      CachedUUIDEntry cachedUUIDEntry = uuidToNameCache.getIfPresent(player);
+      if (cachedUUIDEntry != null) {
+        playerNames.add(cachedUUIDEntry.name);
+        players.remove(player);
+      }
+    }
+
+    // Okay, it wasn't locally cached. Let's try Redis.
+    List<String> storedValues = resource.mget(playerNames.stream()
+        .map(str -> UUID_CACHE_PREFIX + str)
+        .toArray(String[]::new));
+    for(String storedEntry: storedValues) {
+        var entry = CachedUUIDEntry.parse(storedEntry);
+
+        playerNames.add(entry.getName().toLowerCase());
+        nameToUuidCache.put(entry.getName().toLowerCase(), entry);
+        uuidToNameCache.put(entry.uuid, entry);
+    }
+
+    return playerNames;
   }
 
   public void persistInfo(String name, UUID uuid, StringCommands jedis) {

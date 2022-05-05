@@ -1,5 +1,7 @@
 package co.schemati.trevor.api.database.uuid;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 public interface UuidTranslator {
@@ -8,6 +10,12 @@ public interface UuidTranslator {
    * @return player name
    */
   String getNameFromUuid(UUID player);
+
+  /**
+   * Converts UUID to player's name
+   * @return player name
+   */
+  List<String> getNameFromUuids(Collection<UUID> player);
 
   /**
    * Converts name to UUID

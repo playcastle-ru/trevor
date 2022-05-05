@@ -3,12 +3,12 @@ package co.schemati.trevor.common.database.redis;
 import co.schemati.trevor.api.data.User;
 import co.schemati.trevor.api.database.DatabaseConnection;
 import co.schemati.trevor.api.database.uuid.UuidTranslator;
-import co.schemati.trevor.api.database.uuid.UuidTranslatorProxy;
 import co.schemati.trevor.api.instance.InstanceData;
 import co.schemati.trevor.api.network.payload.DisconnectPayload;
 import co.schemati.trevor.common.database.redis.uuid.RedisUuidTranslator;
 import co.schemati.trevor.common.database.redis.uuid.UuidTranslatorImpl;
 import com.google.common.collect.ImmutableList;
+import java.util.List;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
 
@@ -24,7 +24,6 @@ import static co.schemati.trevor.common.database.redis.RedisDatabase.HEARTBEAT;
 import static co.schemati.trevor.common.database.redis.RedisDatabase.INSTANCE_PLAYERS;
 import static co.schemati.trevor.common.database.redis.RedisDatabase.PLAYER_DATA;
 import static co.schemati.trevor.common.database.redis.RedisDatabase.SERVER_PLAYERS;
-import static co.schemati.trevor.common.database.redis.RedisDatabase.UUID_NAME_DATA;
 
 public class RedisConnection implements DatabaseConnection {
 
@@ -81,7 +80,6 @@ public class RedisConnection implements DatabaseConnection {
     }
 
     connection.hmset(replace(PLAYER_DATA, user), user.toDatabaseMap(instance));
-    connection.set(replace(UUID_NAME_DATA, user.name()), user.uuid().toString());
     connection.sadd(replace(INSTANCE_PLAYERS, instance), user.toString());
 
     return true;
@@ -91,7 +89,6 @@ public class RedisConnection implements DatabaseConnection {
   public DisconnectPayload destroy(String name, UUID uuid) {
     long timestamp = System.currentTimeMillis();
     destroy(timestamp, uuid);
-    connection.del(replace(UUID_NAME_DATA, name));
 
     return DisconnectPayload.of(instance, uuid, timestamp);
   }
@@ -187,7 +184,6 @@ public class RedisConnection implements DatabaseConnection {
   public void clean(String instance) {
     Pipeline pipeline = connection.pipelined();
     for(String uuid: connection.smembers(replace(INSTANCE_PLAYERS, instance))) {
-      pipeline.del(replace(UUID_NAME_DATA, connection.hget(replace(PLAYER_DATA, uuid), "name")));
       destroy(System.currentTimeMillis(), UUID.fromString(uuid));
     }
     pipeline.sync();

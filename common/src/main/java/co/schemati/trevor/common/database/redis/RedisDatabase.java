@@ -24,7 +24,6 @@ public class RedisDatabase implements Database {
   public static final String INSTANCE_PLAYERS = "instance:{}:players";
   public static final String SERVER_PLAYERS = "server:{}:players";
   public static final String PLAYER_DATA = "player:{}";
-  public static final String UUID_NAME_DATA = "uuidname:{}";
 
   private final Platform platform;
   private final String instance;

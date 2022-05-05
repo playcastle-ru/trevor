@@ -2,6 +2,8 @@ package co.schemati.trevor.common.database.redis.uuid;
 
 import co.schemati.trevor.api.database.uuid.UuidTranslator;
 import co.schemati.trevor.api.database.uuid.UuidTranslatorProxy;
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.commands.StringCommands;
@@ -19,6 +21,11 @@ public class UuidTranslatorImpl implements UuidTranslator {
   @Override
   public String getNameFromUuid(UUID player) {
     return proxy.getNameFromUuid(player, jedis);
+  }
+
+  @Override
+  public List<String> getNameFromUuids(Collection<UUID> player) {
+    return proxy.getNameFromUuids(player, jedis);
   }
 
   @Override
