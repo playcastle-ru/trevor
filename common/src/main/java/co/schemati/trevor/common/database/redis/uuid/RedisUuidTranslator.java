@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import redis.clients.jedis.commands.KeyCommands;
 import redis.clients.jedis.commands.StringCommands;
 import redis.clients.jedis.params.SetParams;
 
@@ -142,6 +143,14 @@ public final class RedisUuidTranslator implements UuidTranslatorProxy<StringComm
     jedis.set(UUID_CACHE_PREFIX + name.toLowerCase(), entry.toString(), new SetParams()
         .ex(CACHE_VALIDITY.toSeconds()));
   }
+
+  public void invalidate(String name, UUID player, KeyCommands jedis) {
+    nameToUuidCache.invalidate(name.toLowerCase());
+    uuidToNameCache.invalidate(player);
+
+    jedis.del(UUID_CACHE_PREFIX + player, UUID_CACHE_PREFIX + name.toLowerCase());
+  }
+
 
   private static class CachedUUIDEntry {
 

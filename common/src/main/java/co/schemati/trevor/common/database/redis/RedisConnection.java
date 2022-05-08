@@ -88,6 +88,7 @@ public class RedisConnection implements DatabaseConnection {
   @Override
   public DisconnectPayload destroy(String name, UUID uuid) {
     long timestamp = System.currentTimeMillis();
+    uuidTranslator.invalidate(name, uuid, connection);
     destroy(timestamp, uuid);
 
     return DisconnectPayload.of(instance, uuid, timestamp);
