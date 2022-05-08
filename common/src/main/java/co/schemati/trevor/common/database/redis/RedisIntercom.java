@@ -40,8 +40,7 @@ public class RedisIntercom implements DatabaseIntercom, JedisPubSubHandler {
 
   @Override
   public void init() {
-    dataSource.subscribe(Strings.replace(CHANNEL_INSTANCE, instance).getBytes(), CHANNEL_DATA.getBytes());
-    dataSource.addHandler(this);
+    dataSource.subscribe(this, Strings.replace(CHANNEL_INSTANCE, instance), CHANNEL_DATA);
   }
 
   public void add(String... channel) {
