@@ -15,6 +15,7 @@ import co.schemati.trevor.velocity.platform.event.VelocityNetworkEvent;
 import co.schemati.trevor.velocity.platform.event.VelocityNetworkMessageEvent;
 import co.schemati.trevor.velocity.platform.event.VelocityNetworkServerChangeEvent;
 import java.util.concurrent.CompletableFuture;
+import net.kyori.adventure.text.Component;
 
 public class VelocityEventProcessor implements EventProcessor {
 
@@ -47,9 +48,13 @@ public class VelocityEventProcessor implements EventProcessor {
   @Override
   public <T extends NetworkChangeServerEvent> EventAction<T> onChangeServer(
       ChangeServerPayload payload) {
-    plugin.getProxy().getPlayer(payload.uuid()).ifPresent(player -> player.createConnectionRequest(
-        plugin.getProxy().getServer(payload.getDestinationServer()).orElseThrow()
-    ).connectWithIndication().join());
+    var player = plugin.getProxy().getPlayer(payload.uuid()).get();
+    var server = plugin.getProxy().getServer(payload.getDestinationServer());
+    if (server.isEmpty()) {
+      player.sendMessage(Component.text("Unknown server!"));
+      return empty();
+    }
+    player.createConnectionRequest(server.get()).fireAndForget();
     return empty();
   }
 

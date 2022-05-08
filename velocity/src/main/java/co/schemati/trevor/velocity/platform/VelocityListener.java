@@ -80,10 +80,19 @@ public class VelocityListener {
       return;
 
     if(event.getIdentifier().getId().equals("multisend")) {
+      event.setResult(ForwardResult.handled());
+
       var input = ByteStreams.newDataInput(event.getData());
       var uuid = new UUID(input.readLong(), input.readLong());
-      proxy.changeServer(uuid, input.readUTF());
-      event.setResult(ForwardResult.handled());
+      var serverName = input.readUTF();
+      plugin.getProxy().getPlayer(uuid).ifPresentOrElse(player -> {
+        var server = plugin.getProxy().getServer(serverName);
+        if (server.isEmpty()) {
+          player.sendMessage(Component.text("Unknown server!"));
+        } else {
+          player.createConnectionRequest(server.get()).fireAndForget();
+        }
+      }, () ->  proxy.changeServer(uuid, serverName));
     }
   }
 
