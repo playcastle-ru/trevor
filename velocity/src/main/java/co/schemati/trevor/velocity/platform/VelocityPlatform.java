@@ -58,6 +58,11 @@ public class VelocityPlatform extends AbstractPlatformBase {
   }
 
   @Override
+  public void error(String message, Throwable t) {
+    plugin.getLogger().error(message, t);
+  }
+
+  @Override
   public UUID getLocalPlayerUuid(String name) {
     return plugin.getProxy().getPlayer(name).map(Player::getUniqueId).orElse(null);
   }

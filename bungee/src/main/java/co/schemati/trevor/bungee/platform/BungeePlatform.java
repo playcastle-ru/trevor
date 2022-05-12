@@ -5,6 +5,7 @@ import co.schemati.trevor.api.util.Strings;
 import co.schemati.trevor.bungee.TrevorBungee;
 import co.schemati.trevor.common.platform.AbstractPlatformBase;
 import java.util.UUID;
+import java.util.logging.Level;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 public class BungeePlatform extends AbstractPlatformBase {
@@ -41,6 +42,11 @@ public class BungeePlatform extends AbstractPlatformBase {
   @Override
   public void log(String message, Object... values) {
     plugin.getLogger().info(Strings.format(message, values));
+  }
+
+  @Override
+  public void error(String message, Throwable t) {
+    plugin.getLogger().log(Level.SEVERE, message, t) ;
   }
 
   @Override

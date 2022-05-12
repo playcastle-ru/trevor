@@ -12,7 +12,7 @@ allprojects {
     apply plugin: 'java'
 
 	group 'co.schemati.trevor'
-	version '2.0.1-SNAPSHOT'
+	version '2.0.2-SNAPSHOT'
     description 'Trevor is a platform-independent solution for cross-instance proxy communication'
 
 	sourceCompatibility = JavaVersion.VERSION_11

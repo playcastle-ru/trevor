@@ -7,7 +7,9 @@ import com.google.common.cache.CacheBuilder;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import redis.clients.jedis.commands.KeyCommands;
 import redis.clients.jedis.commands.StringCommands;
@@ -95,36 +97,41 @@ public final class RedisUuidTranslator implements UuidTranslatorProxy<StringComm
   }
 
   @Override
-  public List<String> getNameFromUuids(Collection<UUID> collectionPlayers, StringCommands resource) {
+  public Map<UUID, String> getNameFromUuids(Collection<UUID> collectionPlayers, StringCommands resource) {
     List<UUID> players = new ArrayList<>(collectionPlayers);
-    List<String> playerNames = new ArrayList<>();
+    Map<UUID, String> playerNames = new HashMap<>();
 
-    for(UUID player: players) {
+    var playerIterator = players.iterator();
+    while (playerIterator.hasNext()) {
+      var player = playerIterator.next();
       // If the player is online, give them their UUID.
       // Remember, local data > remote data.
       var localName = platform.getLocalPlayerName(player);
       if (localName != null) {
-        playerNames.add(localName);
-        players.remove(player);
+        playerNames.put(player, localName);
+        playerIterator.remove();
         continue;
       }
 
       // Check if it exists in the map
       CachedUUIDEntry cachedUUIDEntry = uuidToNameCache.getIfPresent(player);
       if (cachedUUIDEntry != null) {
-        playerNames.add(cachedUUIDEntry.name);
-        players.remove(player);
+        playerNames.put(player, cachedUUIDEntry.name);
+        playerIterator.remove();
       }
     }
 
+    if(players.isEmpty())
+      return playerNames;
+
     // Okay, it wasn't locally cached. Let's try Redis.
-    List<String> storedValues = resource.mget(playerNames.stream()
+    List<String> storedValues = resource.mget(players.stream()
         .map(str -> UUID_CACHE_PREFIX + str)
         .toArray(String[]::new));
     for(String storedEntry: storedValues) {
         var entry = CachedUUIDEntry.parse(storedEntry);
 
-        playerNames.add(entry.getName().toLowerCase());
+        playerNames.put(entry.getUuid(), entry.getName().toLowerCase());
         nameToUuidCache.put(entry.getName().toLowerCase(), entry);
         uuidToNameCache.put(entry.uuid, entry);
     }

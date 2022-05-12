@@ -58,6 +58,14 @@ public interface Platform {
   void log(String message, Object... values);
 
   /**
+   * Log error.
+   *
+   * @param message the message
+   * @param t throwable
+   */
+  void error(String message, Throwable t);
+
+  /**
    * Gets unique id of player by specified name in this proxy instance
    */
   UUID getLocalPlayerUuid(String name);
